@@ -6,8 +6,9 @@ CurrentModule = EnforcedTypeSignatureCallables
 
 Documentation for [EnforcedTypeSignatureCallables](https://gitlab.com/nsajko/EnforcedTypeSignatureCallables.jl).
 
-```@index
-```
+We export only a single name, [`TypedCallable`](@ref).
+
+## API
 
 ```@autodocs
 Modules = [EnforcedTypeSignatureCallables]
