@@ -29,12 +29,7 @@ struct TypedCallable{A<:Tuple,R,F}
     """
     function TypedCallable{A,R}(f::F) where {A<:Tuple,R,F}
         t_r = R::Type
-        r = new{A,t_r,F}(f)
-        r = r::TypedCallable
-        r = r::TypedCallable{A}
-        r = r::TypedCallable{A,t_r}
-        r = r::TypedCallable{A,t_r,F}
-        r
+        new{A,t_r,F}(f)
     end
 end
 
