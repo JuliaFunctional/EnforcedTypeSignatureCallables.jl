@@ -1,49 +1,162 @@
 module EnforcedTypeSignatureCallables
 
-export TypedCallable
+export CallableWithReturnType, CallableWithTypeSignature, typed_callable
 
-"""
-    TypedCallable
-
-A simple callable type wrapping another callable.
-
-There are three type parameters: the first type parameter represents the allowed types
-of the positional arguments. The second type parameter is the allowed return type of the
-callable. The third type parameter is the type of the wrapped callable.
-
-The first type parameter, representing the allowed positional argument types, always
-subtypes `Tuple`. For example, to allow either a single `Int` argument or two `Bool`
-arguments, choose `Union{Tuple{Int},Tuple{Bool,Bool}}` as the first type parameter.
-
-To disable argument type checking, just choose `Tuple` as the first parameter.
-
-To disable return type checking, just choose `Any`, as the second parameter.
-"""
-struct TypedCallable{A<:Tuple,R,F}
-    f::F
-
-    """
-        TypedCallable{A,R}(f)
-
-    Construct a `TypedCallable{A,R}` wrapping the callable `f`.
-    """
-    function TypedCallable{A,R}(f::F) where {A<:Tuple,R,F}
-        t_r = R::Type
-        new{A,t_r,F}(f)
+struct CallableWithArgumentTypes{Arguments <: Tuple, Callable} <: Function
+    callable::Callable
+    function CallableWithArgumentTypes{Arguments}(callable::Callable) where {Arguments <: Tuple, Callable}
+        callable_type = if callable isa Type
+            Type{callable}
+        else
+            typeof(callable)
+        end
+        new{Arguments, callable_type}(callable)
     end
 end
 
-"""
-    (tc::TypedCallable{A,R})(args...; kwargs...)
+function Base.propertynames((@nospecialize unused::CallableWithArgumentTypes), ::Bool = false)
+    ()
+end
 
-1. Enforces `args isa A`
-2. Calls `tc.f` with the provided positional and keyword arguments
-3. Enforces the return type of the above call as `R`
+function (callable::CallableWithArgumentTypes)(args...; kwargs...)
+    function arguments(::CallableWithArgumentTypes{Arguments}) where {Arguments <: Tuple}
+        Arguments
+    end
+    args = args::arguments(callable)
+    c = getfield(callable, 1)
+    c(args...; kwargs...)
+end
+
 """
-function (tc::TypedCallable{A,R})(args::Vararg{Any,N}; kwargs...) where {A,R,N}
-    args = args::A
-    r = (tc.f)(args...; kwargs...)
-    r::R
+    CallableWithReturnType <: ComposedFunction
+
+Type of callables with a guaranteed return type.
+
+Has two type variables:
+
+* the return type
+
+* the underlying callable type
+
+`CallableWithReturnType` is not a newly defined type. It is merely a type alias based on:
+
+* `ComposedFunction`
+
+* `Base.Fix2`
+
+* `typeassert`
+
+For some type `Return` we have the following identity which allows dispatching on a function with a certain guaranteed return type:
+
+```julia
+CallableWithReturnType{Return} == ComposedFunction{Base.Fix2{typeof(typeassert), Type{Return}}}
+```
+
+Lacks constructor methods. Construct a `CallableWithReturnType` using [`typed_callable`](@ref).
+"""
+const CallableWithReturnType = ComposedFunction{
+    Base.Fix2{
+        typeof(typeassert),
+        Type{Return},
+    },
+    Callable,
+} where {
+    Return,
+    Callable,
+}
+
+"""
+    CallableWithTypeSignature <: CallableWithReturnType
+
+Type of callables with a guaranteed return type and argument types.
+
+Has three type variables:
+
+* the return type
+
+* the type of the positional (non-keyword) arguments, subtypes `Tuple`
+
+* the underlying callable type
+
+Lacks constructor methods. Construct a `CallableWithTypeSignature` using [`typed_callable`](@ref).
+"""
+const CallableWithTypeSignature = CallableWithReturnType{
+    Return,
+    CallableWithArgumentTypes{
+        Arguments,
+        Callable,
+    },
+} where {
+    Return,
+    Arguments <: Tuple,
+    Callable,
+}
+
+function return_type_enforcer(::Type{Return}) where {Return}
+    Base.Fix2(typeassert, Return)
+end
+
+"""
+    typed_callable(return_type::Type, argument_types::Type{<:Tuple}, callable)::CallableWithTypeSignature{return_type, argument_types}
+
+Creates a callable from `callable` with:
+
+* guaranteed return type `return_type`
+
+* guaranteed argument types `argument_types`
+
+The return type is [`CallableWithTypeSignature`](@ref).
+
+Examples:
+
+```julia-repl
+julia> using EnforcedTypeSignatureCallables
+
+julia> typed_callable(Float32, Tuple{Float32, Float32}, hypot)(3.1f0, 3.0f0)
+4.313931f0
+
+julia> typed_callable(Float32, Tuple{Float32, Float32}, hypot)(3.1f0, 3.0)
+ERROR: TypeError: in typeassert, expected Tuple{Float32, Float32}, got a value of type Tuple{Float32, Float64}
+```
+"""
+function typed_callable(::Type{Return}, ::Type{Arguments}, callable::Callable) where {
+    Return, Arguments <: Tuple, Callable,
+}
+    ret = return_type_enforcer(Return)
+    with_argument_types = CallableWithArgumentTypes{Arguments}(callable)
+    ret ∘ with_argument_types
+end
+
+"""
+    typed_callable(return_type::Type, callable)::CallableWithReturnType{return_type}
+
+Creates a callable from `callable` with guaranteed return type `return_type`
+
+The return type is [`CallableWithReturnType`](@ref).
+
+Examples:
+
+```julia-repl
+julia> using EnforcedTypeSignatureCallables
+
+julia> typed_callable(Int, Int)(3)
+3
+
+julia> typed_callable(Int, Int) isa CallableWithReturnType{Int}
+true
+
+julia> typed_callable(Float64, cos)(3)
+-0.9899924966004454
+
+julia> typed_callable(Float32, cos)(3.0)
+ERROR: TypeError: in typeassert, expected Float32, got a value of type Float64
+```
+"""
+function typed_callable(::Type{Return}, callable::Callable) where {
+    Return, Callable,
+}
+    ret = return_type_enforcer(Return)
+    ret ∘ callable
 end
 
 end

@@ -7,46 +7,49 @@ using Aqua: Aqua
         Aqua.test_all(EnforcedTypeSignatureCallables)
     end
 
-    @testset "construction" begin
-        @testset "successful" begin
-            for A ∈ (Tuple, Tuple{Vararg{Float64}}, Tuple{Float64}, Union{Tuple{Nothing},Tuple{Float64}})
-                for R ∈ (Any, Float64)
-                    for f ∈ (sin, cos)
-                        @test TypedCallable{A,R}(f) isa TypedCallable
-                        @test TypedCallable{A,R}(f) isa TypedCallable{A}
-                        @test TypedCallable{A,R}(f) isa TypedCallable{A,R}
-                        @test TypedCallable{A,R}(f) isa TypedCallable{A,R,typeof(f)}
-                    end
-                end
-            end
+    @testset "`CallableWithReturnType`" begin
+        @testset "subtyping" begin
+            @test CallableWithReturnType <: ComposedFunction
+            @test CallableWithReturnType{Float32} == ComposedFunction{Base.Fix2{typeof(typeassert), Type{Float32}}}
         end
-        @testset "failed" begin
-            @test_throws TypeError TypedCallable{Vector}
-            @test_throws TypeError TypedCallable{Vector,Any}
-            @test_throws TypeError TypedCallable{Vector,Any,typeof(sin)}
+        @testset "construction" begin
+            @test (@inferred typed_callable(Float64, cos)) isa CallableWithReturnType
+            @test (@inferred typed_callable(Float64, cos)) isa CallableWithReturnType{Float64}
+            @test (@inferred typed_callable(Float64, cos)) isa CallableWithReturnType{Float64, typeof(cos)}
         end
-    end
-
-    @testset "argument type enforcement" begin
-        @testset "successful" begin
-            @test TypedCallable{Tuple{Vararg{Float64}},Any}(sin)(0.1) isa Float64
-            @test TypedCallable{Tuple{Vararg{Float32}},Any}(sin)(0.1f0) isa Float32
-            @test TypedCallable{Union{Tuple{Nothing},Tuple{Float64}},Any}(sin)(0.1) isa Float64
-        end
-        @testset "failed" begin
-            @test_throws TypeError TypedCallable{Tuple{Vararg{Float64}},Any}(sin)(0.1f0)
+        @testset "return type enforcement" begin
+            f = typed_callable(Int, only)::CallableWithReturnType
+            x_int = Any[3]
+            x_f64 = Any[3.0]
+            @test 3 === @inferred f(x_int)
+            @test_throws TypeError f(x_f64)
         end
     end
 
-    @testset "return type enforcement" begin
-        @testset "successful" begin
-            @test TypedCallable{Tuple,Float64}(sin)(0.1) isa Float64
-            @test TypedCallable{Tuple,Float32}(sin)(0.1f0) isa Float32
-            @test TypedCallable{Tuple,Union{Float32,Float64}}(sin)(0.1) isa Float64
+    @testset "`CallableWithTypeSignature`" begin
+        @testset "subtyping" begin
+            @test CallableWithTypeSignature <: CallableWithReturnType
+            @test CallableWithTypeSignature{Float32} <: ComposedFunction{Base.Fix2{typeof(typeassert), Type{Float32}}}
+            @test_throws TypeError CallableWithTypeSignature{<:Any, Int}
         end
-        @testset "failed" begin
-            @test_throws TypeError TypedCallable{Tuple,Float64}(sin)(0.1f0)
-            @test_throws TypeError TypedCallable{Tuple,Float32}(sin)(0.1)
+        @testset "construction" begin
+            @test (@inferred typed_callable(Float64, Tuple{Int, Int}, hypot)) isa CallableWithTypeSignature
+            @test (@inferred typed_callable(Float64, Tuple{Int, Int}, hypot)) isa CallableWithTypeSignature{Float64}
+            @test (@inferred typed_callable(Float64, Tuple{Int, Int}, hypot)) isa CallableWithTypeSignature{Float64, Tuple{Int, Int}}
+            @test (@inferred typed_callable(Float64, Tuple{Int, Int}, hypot)) isa CallableWithTypeSignature{Float64, Tuple{Int, Int}, typeof(hypot)}
+            @test_throws MethodError typed_callable(Int, Int, Int)  # arguments type must subtype `Tuple`
+        end
+        @testset "arguments type enforcement" begin
+            f = typed_callable(Any, Tuple{Int}, -)::CallableWithTypeSignature
+            @test -3 === @inferred f(3)
+            @test_throws TypeError f(3.0)
+        end
+        @testset "return type enforcement" begin
+            f = typed_callable(Int, Tuple, only)::CallableWithTypeSignature
+            x_int = Any[3]
+            x_f64 = Any[3.0]
+            @test 3 === @inferred f(x_int)
+            @test_throws TypeError f(x_f64)
         end
     end
 end
