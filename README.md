@@ -108,3 +108,8 @@ when the callable argument has a certain type signature. One way to achieve this
 to restrict the allowed types of the callable argument to chosen subtypes of
 `CallableWithReturnType`. This includes `CallableWithTypeSignature`, so the entire
 type signature, except any keyword arguments, may be accounted for.
+
+For example, a `CallableWithReturnType{Float32}` is guaranteed to return a
+`Float32` value, if a value is returned. A
+`CallableWithTypeSignature{Float32, Tuple{Float32, Float32}}` additionally
+guarantees to only accept exactly two `Float32` values as positional arguments.
