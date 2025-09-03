@@ -14,10 +14,6 @@ struct CallableWithArgumentTypes{Arguments <: Tuple, Callable} <: Function
     end
 end
 
-function Base.propertynames((@nospecialize unused::CallableWithArgumentTypes), ::Bool = false)
-    ()
-end
-
 function (callable::CallableWithArgumentTypes)(args...; kwargs...)
     function arguments(::CallableWithArgumentTypes{Arguments}) where {Arguments <: Tuple}
         Arguments
