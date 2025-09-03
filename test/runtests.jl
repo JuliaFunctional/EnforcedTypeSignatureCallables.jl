@@ -37,19 +37,37 @@ using Aqua: Aqua
             @test (@inferred typed_callable(Float64, Tuple{Int, Int}, hypot)) isa CallableWithTypeSignature{Float64}
             @test (@inferred typed_callable(Float64, Tuple{Int, Int}, hypot)) isa CallableWithTypeSignature{Float64, Tuple{Int, Int}}
             @test (@inferred typed_callable(Float64, Tuple{Int, Int}, hypot)) isa CallableWithTypeSignature{Float64, Tuple{Int, Int}, typeof(hypot)}
+            @test (@inferred typed_callable(Int, Tuple{Float32}, Int)) isa CallableWithTypeSignature
+            @test (@inferred typed_callable(Int, Tuple{Float32}, Int)) isa CallableWithTypeSignature{Int}
+            @test (@inferred typed_callable(Int, Tuple{Float32}, Int)) isa CallableWithTypeSignature{Int, Tuple{Float32}}
+            @test (@inferred typed_callable(Int, Tuple{Float32}, Int)) isa CallableWithTypeSignature{Int, Tuple{Float32}, Type{Int}}
             @test_throws MethodError typed_callable(Int, Int, Int)  # arguments type must subtype `Tuple`
         end
         @testset "arguments type enforcement" begin
-            f = typed_callable(Any, Tuple{Int}, -)::CallableWithTypeSignature
-            @test -3 === @inferred f(3)
-            @test_throws TypeError f(3.0)
+            @testset "non-`Type`" begin
+                f = typed_callable(Any, Tuple{Int}, -)::CallableWithTypeSignature
+                @test -3 === @inferred f(3)
+                @test_throws TypeError f(3.0)
+            end
+            @testset "`Type`" begin
+                f = typed_callable(Any, Tuple{Int}, Int8)::CallableWithTypeSignature
+                @test Int8(3) === @inferred f(3)
+                @test_throws TypeError f(3.0)
+            end
         end
         @testset "return type enforcement" begin
-            f = typed_callable(Int, Tuple, only)::CallableWithTypeSignature
             x_int = Any[3]
             x_f64 = Any[3.0]
-            @test 3 === @inferred f(x_int)
-            @test_throws TypeError f(x_f64)
+            @testset "non-`Type`" begin
+                f = typed_callable(Int, Tuple, only)::CallableWithTypeSignature
+                @test 3 === @inferred f(x_int)
+                @test_throws TypeError f(x_f64)
+            end
+            @testset "`Type`" begin
+                f = typed_callable(Int, Tuple, Int)::CallableWithTypeSignature
+                @test 3 === @inferred f(3)
+                @test 3 === @inferred f(3.0)
+            end
         end
     end
 end
