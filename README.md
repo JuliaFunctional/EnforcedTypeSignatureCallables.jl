@@ -96,6 +96,18 @@ julia> Base.infer_return_type(improved, Tuple{NTuple{5, Any}})  # the return typ
 NTuple{5, Int64}
 ```
 
+NB: `typed_callable(Int, Int)` actually only consists of types already present in
+`Base` Julia, so it's just a nicer interface for functionality that already comes
+with Julia:
+
+```julia-repl
+julia> typed_callable(Int, Int)
+Base.Fix2{typeof(typeassert), Type{Int64}}(typeassert, Int64) ∘ Int64
+```
+
+The three-argument version of `typed_callable` depends on a type defined in this
+package, though.
+
 ### Use case 2: dispatch on callables with a certain type signature (kind of)
 
 This is what many newcomers to Julia ask for, especially when coming from a
