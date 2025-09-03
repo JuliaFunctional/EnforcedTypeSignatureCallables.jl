@@ -10,8 +10,8 @@ type signature data.
 
 Might help with bad inference.
 
-Kind of provides a restricted way of expressing a type signature for a callable in
-Julia's type system.
+Provides somewhat of a restricted way of expressing a type signature for a callable
+in Julia's type system.
 
 ## Provided functionality
 
