@@ -52,17 +52,17 @@ The package exports the following bindings:
 ```julia-repl
 julia> using EnforcedTypeSignatureCallables
 
-julia> typed_callable(Float32, sin)(0.3f0)
+julia> typed_callable(sin, Float32)(0.3f0)
 0.29552022f0
 
-julia> typed_callable(Float32, sin)(0.3)
+julia> typed_callable(sin, Float32)(0.3)
 ERROR: TypeError: in typeassert, expected Float32, got a value of type Float64
 [...]
 
-julia> typed_callable(Float64, Tuple{Int, Int}, hypot)(3, 4)
+julia> typed_callable(hypot, Float64, Tuple{Int, Int})(3, 4)
 5.0
 
-julia> typed_callable(Float64, Tuple{Int, Int}, hypot)(3, 4.0)
+julia> typed_callable(hypot, Float64, Tuple{Int, Int})(3, 4.0)
 ERROR: TypeError: in typeassert, expected Tuple{Int64, Int64}, got a value of type Tuple{Int64, Float64}
 [...]
 ```
@@ -133,7 +133,7 @@ suffices to call `typed_callable` once:
 
 ```julia
 function accepts_a_function_from_the_user(func, other_arguments...)
-    func = typed_callable(Float64, func)
+    func = typed_callable(func, Float64)
     # any call of `func` is now guaranteed not to return anything other than `Float64`
 end
 ```
@@ -146,7 +146,7 @@ function accepts_a_function_from_the_user_type_safe(func::CallableWithReturnType
 end
 
 function accepts_a_function_from_the_user(func, other_arguments...)
-    func = typed_callable(Float64, func)
+    func = typed_callable(func, Float64)
     accepts_a_function_from_the_user_type_safe(func, other_arguments...)
 end
 ```
