@@ -125,3 +125,49 @@ For example, a `CallableWithReturnType{Float32}` is guaranteed to return a
 `Float32` value, if a value is returned. A
 `CallableWithTypeSignature{Float32, Tuple{Float32, Float32}}` additionally
 guarantees to only accept exactly two `Float32` values as positional arguments.
+
+For example, suppose your package has a method that accepts a function from the
+user. Further suppose the method code expects the user-provided function to only
+ever return `Float64`. Instead of sprinkling typeasserts all over your code, it
+suffices to call `typed_callable` once:
+
+```julia
+function accepts_a_function_from_the_user(func, other_arguments...)
+    func = typed_callable(Float64, func)
+    # any call of `func` is now guaranteed not to return anything other than `Float64`
+end
+```
+
+Furthermore, dispatch can also be used to achieve type safety in this regard:
+
+```julia
+function accepts_a_function_from_the_user_type_safe(func::CallableWithReturnType{Float64}, other_arguments...)
+    # any call of `func` is guaranteed not to return anything other than `Float64`
+end
+
+function accepts_a_function_from_the_user(func, other_arguments...)
+    func = typed_callable(Float64, func)
+    accepts_a_function_from_the_user_type_safe(func, other_arguments...)
+end
+```
+
+### Why not just use an inline closure with a `typeassert`?
+
+Creating a new local function with a typeassert in the method body would work as
+intended for both:
+
+* helping the compiler achieve good inference
+
+* wrapping a user-provided function into a type-safe wrapper function
+
+However using `typed_callable` instead is slightly better:
+
+* avoiding the creation of a new function is slightly friendlier to the compiler,
+  giving it less work to do
+
+* using a standardized type may allow the ecosystem to converge on a single type to
+  dispatch on when a callable with a certain type signature is required
+
+    * This is more so appropriate as `CallableWithReturnType` is just a type alias
+      for a type already provided by `Base`. Thus a package doesn't even need to
+      depend on this package to dispatch on `CallableWithReturnType{ReturnType}`.
