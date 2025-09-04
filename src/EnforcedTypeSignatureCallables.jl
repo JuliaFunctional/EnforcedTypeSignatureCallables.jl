@@ -93,7 +93,7 @@ function return_type_enforcer(::Type{Return}) where {Return}
 end
 
 """
-    typed_callable(return_type::Type, argument_types::Type{<:Tuple}, callable)::CallableWithTypeSignature{return_type, argument_types}
+    typed_callable(callable, return_type::Type, argument_types::Type{<:Tuple})::CallableWithTypeSignature{return_type, argument_types}
 
 Creates a callable from `callable` with:
 
@@ -108,14 +108,14 @@ Examples:
 ```julia-repl
 julia> using EnforcedTypeSignatureCallables
 
-julia> typed_callable(Float32, Tuple{Float32, Float32}, hypot)(3.1f0, 3.0f0)
+julia> typed_callable(hypot, Float32, Tuple{Float32, Float32})(3.1f0, 3.0f0)
 4.313931f0
 
-julia> typed_callable(Float32, Tuple{Float32, Float32}, hypot)(3.1f0, 3.0)
+julia> typed_callable(hypot, Float32, Tuple{Float32, Float32})(3.1f0, 3.0)
 ERROR: TypeError: in typeassert, expected Tuple{Float32, Float32}, got a value of type Tuple{Float32, Float64}
 ```
 """
-function typed_callable(::Type{Return}, ::Type{Arguments}, callable::Callable) where {
+function typed_callable(callable::Callable, ::Type{Return}, ::Type{Arguments}) where {
     Return, Arguments <: Tuple, Callable,
 }
     ret = return_type_enforcer(Return)
@@ -124,7 +124,7 @@ function typed_callable(::Type{Return}, ::Type{Arguments}, callable::Callable) w
 end
 
 """
-    typed_callable(return_type::Type, callable)::CallableWithReturnType{return_type}
+    typed_callable(callable, return_type::Type)::CallableWithReturnType{return_type}
 
 Creates a callable from `callable` with guaranteed return type `return_type`
 
@@ -141,14 +141,14 @@ julia> typed_callable(Int, Int)(3)
 julia> typed_callable(Int, Int) isa CallableWithReturnType{Int}
 true
 
-julia> typed_callable(Float64, cos)(3)
+julia> typed_callable(cos, Float64)(3)
 -0.9899924966004454
 
-julia> typed_callable(Float32, cos)(3.0)
+julia> typed_callable(cos, Float32)(3.0)
 ERROR: TypeError: in typeassert, expected Float32, got a value of type Float64
 ```
 """
-function typed_callable(::Type{Return}, callable::Callable) where {
+function typed_callable(callable::Callable, ::Type{Return}) where {
     Return, Callable,
 }
     ret = return_type_enforcer(Return)
