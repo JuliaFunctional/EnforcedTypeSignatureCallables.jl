@@ -92,6 +92,21 @@ function return_type_enforcer(::Type{Return}) where {Return}
     Base.Fix2(typeassert, Return)
 end
 
+function typed_callable_no_special_casing(callable::Callable, ::Type{Return}) where {
+    Return, Callable,
+}
+    ret = return_type_enforcer(Return)
+    ret ∘ callable
+end
+
+function typed_callable_no_special_casing(callable::Callable, ::Type{Return}, ::Type{Arguments}) where {
+    Return, Arguments <: Tuple, Callable,
+}
+    ret = return_type_enforcer(Return)
+    with_argument_types = CallableWithArgumentTypes{Arguments}(callable)
+    ret ∘ with_argument_types
+end
+
 """
     typed_callable(callable, return_type::Type, argument_types::Type{<:Tuple})::CallableWithTypeSignature{return_type, argument_types}
 
@@ -118,9 +133,11 @@ ERROR: TypeError: in typeassert, expected Tuple{Float32, Float32}, got a value o
 function typed_callable(callable::Callable, ::Type{Return}, ::Type{Arguments}) where {
     Return, Arguments <: Tuple, Callable,
 }
-    ret = return_type_enforcer(Return)
-    with_argument_types = CallableWithArgumentTypes{Arguments}(callable)
-    ret ∘ with_argument_types
+    if callable isa CallableWithTypeSignature{Return, Arguments}  # ensure idempotence
+        callable
+    else
+        typed_callable_no_special_casing(callable, Return, Arguments)
+    end
 end
 
 """
@@ -151,8 +168,11 @@ ERROR: TypeError: in typeassert, expected Float32, got a value of type Float64
 function typed_callable(callable::Callable, ::Type{Return}) where {
     Return, Callable,
 }
-    ret = return_type_enforcer(Return)
-    ret ∘ callable
+    if callable isa CallableWithReturnType{Return}  # ensure idempotence
+        callable
+    else
+        typed_callable_no_special_casing(callable, Return)
+    end
 end
 
 end

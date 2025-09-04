@@ -24,6 +24,11 @@ using Aqua: Aqua
             @test 3 === @inferred f(x_int)
             @test_throws TypeError f(x_f64)
         end
+        @testset "`typed_callable` idempotency" begin
+            @test let t = typed_callable(sin, Float32)
+                t === @inferred typed_callable(t, Float32)
+            end
+        end
     end
 
     @testset "`CallableWithTypeSignature`" begin
@@ -67,6 +72,11 @@ using Aqua: Aqua
                 f = typed_callable(Int, Int, Tuple)::CallableWithTypeSignature
                 @test 3 === @inferred f(3)
                 @test 3 === @inferred f(3.0)
+            end
+        end
+        @testset "`typed_callable` idempotency" begin
+            @test let t = typed_callable(sin, Float32, Tuple{Float32})
+                t === @inferred typed_callable(t, Float32, Tuple{Float32})
             end
         end
     end
