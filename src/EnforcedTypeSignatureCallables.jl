@@ -88,14 +88,10 @@ const CallableWithTypeSignature = CallableWithReturnType{
     Callable,
 }
 
-function return_type_enforcer(::Type{Return}) where {Return}
-    Base.Fix2(typeassert, Return)
-end
-
 function typed_callable_no_special_casing(callable::Callable, ::Type{Return}) where {
     Return, Callable,
 }
-    ret = return_type_enforcer(Return)
+    ret = Base.Fix2(typeassert, Return)
     ret ∘ callable
 end
 
