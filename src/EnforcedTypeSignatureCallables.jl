@@ -102,9 +102,8 @@ end
 function typed_callable_no_special_casing(callable::Callable, ::Type{Return}, ::Type{Arguments}) where {
     Return, Arguments <: Tuple, Callable,
 }
-    ret = return_type_enforcer(Return)
     with_argument_types = CallableWithArgumentTypes{Arguments}(callable)
-    ret ∘ with_argument_types
+    typed_callable_no_special_casing(with_argument_types, Return)
 end
 
 """
