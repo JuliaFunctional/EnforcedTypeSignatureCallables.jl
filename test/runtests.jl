@@ -34,7 +34,7 @@ using Aqua: Aqua
     @testset "`CallableWithTypeSignature`" begin
         @testset "subtyping" begin
             @test CallableWithTypeSignature <: CallableWithReturnType
-            @test CallableWithTypeSignature{Float32} <: ComposedFunction{Base.Fix2{typeof(typeassert), Type{Float32}}}
+            @test CallableWithTypeSignature{Float32} <: CallableWithReturnType{Float32}
             @test_throws TypeError CallableWithTypeSignature{<:Any, Int}
         end
         @testset "construction" begin
