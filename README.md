@@ -1,6 +1,8 @@
 # EnforcedTypeSignatureCallables
 
 [![Build Status](https://github.com/JuliaFunctional/EnforcedTypeSignatureCallables.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaFunctional/EnforcedTypeSignatureCallables.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Package version](https://juliahub.com/docs/General/EnforcedTypeSignatureCallables/stable/version.svg)](https://juliahub.com/ui/Packages/General/EnforcedTypeSignatureCallables)
+[![Package dependencies](https://juliahub.com/docs/General/EnforcedTypeSignatureCallables/stable/deps.svg)](https://juliahub.com/ui/Packages/General/EnforcedTypeSignatureCallables?t=2)
 [![Coverage](https://codecov.io/gh/JuliaFunctional/EnforcedTypeSignatureCallables.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaFunctional/EnforcedTypeSignatureCallables.jl)
 [![PkgEval](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/E/EnforcedTypeSignatureCallables.svg)](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/E/EnforcedTypeSignatureCallables.html)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
